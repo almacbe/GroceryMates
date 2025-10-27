@@ -1,0 +1,37 @@
+# Laravel / PHP
+/vendor/
+/bootstrap/cache/
+/storage/*.key
+/storage/app/public/
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/logs/*
+/.env
+/.env.*
+!.env.example
+
+# Composer
+/composer.phar
+/composer.lock
+
+# Node / Vite
+/node_modules/
+/public/build/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+/.npm
+/.pnpm
+/.yarn
+
+# IDEs & tooling
+/.idea/
+.vscode/
+*.code-workspace
+/.phpunit.result.cache
+/phpunit.xml
+!/phpunit.xml.dist
+/.php-cs-fixer.cache
+/.DS_Store
+Thumbs.db
