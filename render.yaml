@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: grocery-mates-app
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    envVarGroups:
+      - grocery-mates-shared
+    envVars:
+      - key: APP_URL
+        value: https://grocery-mates-app.onrender.com
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: DATABASE_URL
+        fromDatabase:
+          name: grocery-mates-db
+    healthCheckPath: /
+
+databases:
+  - name: grocery-mates-db
+    plan: free
+
+envVarGroups:
+  - name: grocery-mates-shared
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_NAME
+        value: GroceryMates
+      - key: APP_KEY
+        generateValue: true
+      - key: DB_CONNECTION
+        value: pgsql

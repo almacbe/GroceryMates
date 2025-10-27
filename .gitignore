@@ -13,12 +13,10 @@
 
 # Composer
 /composer.phar
-/composer.lock
 
 # Node / Vite
 /node_modules/
 /public/build/
-package-lock.json
 pnpm-lock.yaml
 yarn.lock
 /.npm

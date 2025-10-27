@@ -39,6 +39,19 @@ php artisan serve
 
 Then open [http://127.0.0.1:8000/merge](http://127.0.0.1:8000/merge).
 
+### Deploying to Render
+
+This repository includes a `Dockerfile`, `render.yaml`, and `render-start.sh` so you can deploy with a single Render blueprint:
+
+1. Sign in to [Render](https://render.com/) and click **New → Blueprint Instance**.
+2. Point it at this repository; Render reads `render.yaml` and provisions:
+   - A web service built from the Dockerfile (Apache + PHP 8.2, Node-built assets, Composer dependencies).
+   - A managed PostgreSQL database (free tier by default).
+3. After the first build finishes, update the generated service’s `APP_URL` environment variable to match the Render URL if it changes from the placeholder.
+4. Optional: adjust the database plan or disable auto-deploy previews if not needed.
+
+The `render-start.sh` entrypoint caches configuration, runs database migrations, ensures `public/storage` is linked, and starts Apache. Migrations expect the managed PostgreSQL database Render provisions; switch to another database by editing `render.yaml` or the service env vars.
+
 ### Usage
 
 1. Paste an INDYA-exported checklist into “Lista A” and optionally another into “Lista B”.
