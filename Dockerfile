@@ -33,6 +33,7 @@ RUN apt-get update \
         libpq-dev \
     && docker-php-ext-install pdo_mysql pdo_pgsql zip \
     && a2enmod rewrite \
+    && sed -ri 's/^Listen 80$/Listen ${PORT}/' /etc/apache2/ports.conf \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
