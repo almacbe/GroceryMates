@@ -7,6 +7,7 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --prefer-dist --no-interaction
 
 COPY . .
+RUN mkdir -p bootstrap/cache storage/framework/cache/data storage/framework/sessions storage/framework/testing storage/framework/views storage/logs
 RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
 FROM node:20-bullseye-slim AS node_builder
