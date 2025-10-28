@@ -24,6 +24,26 @@ services:
         fromDatabase:
           name: grocery-mates-db
           property: connectionString
+      - key: DB_HOST
+        fromDatabase:
+          name: grocery-mates-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: grocery-mates-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: grocery-mates-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: grocery-mates-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: grocery-mates-db
+          property: password
     healthCheckPath: /
 
 databases:
