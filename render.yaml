@@ -18,6 +18,8 @@ services:
         value: pgsql
       - key: APP_URL
         value: https://grocery-mates-app.onrender.com
+      - key: ASSET_URL
+        value: https://grocery-mates-app.onrender.com
       - key: LOG_CHANNEL
         value: stderr
       - key: DATABASE_URL
