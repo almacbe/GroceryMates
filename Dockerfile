@@ -42,6 +42,8 @@ COPY docker/apache/laravel.conf /etc/apache2/sites-available/000-default.conf
 COPY --from=vendor /app /var/www/html
 COPY --from=node_builder /app/public/build /var/www/html/public/build
 
+RUN printf "<?php\nrequire __DIR__ . '/public/index.php';\n" > /var/www/html/index.php
+
 RUN mkdir -p storage/framework/cache/data \
     storage/framework/sessions \
     storage/framework/testing \
