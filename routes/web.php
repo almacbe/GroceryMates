@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
+    if (! request()->hasHeader('X-Inertia')) {
+        return view('live-check');
+    }
+
     return inertia('LiveCheck');
 })->name('health');
 
