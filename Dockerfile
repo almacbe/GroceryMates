@@ -1,14 +1,5 @@
 # syntax=docker/dockerfile:1
 
-FROM node:20-bullseye-slim AS node_builder
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci
-
-COPY . .
-RUN npm run build
-
 FROM composer:2.7 AS vendor
 WORKDIR /app
 
@@ -17,6 +8,16 @@ RUN composer install --no-dev --no-scripts --prefer-dist --no-interaction
 
 COPY . .
 RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
+FROM node:20-bullseye-slim AS node_builder
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+COPY --from=vendor /app/vendor /app/vendor
+RUN npm run build
 
 FROM php:8.2-apache-bullseye AS runtime
 
