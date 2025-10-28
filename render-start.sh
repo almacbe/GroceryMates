@@ -24,6 +24,9 @@ if (strlen($key) !== 32) {
     exit(1);
 }
 PHP
+if [ $? -ne 0 ]; then
+    exit 1
+fi
 
 php artisan config:clear
 php artisan config:cache
