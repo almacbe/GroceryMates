@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "➤ Preparing writable directories"
+mkdir -p bootstrap/cache \
+    storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/testing \
+    storage/framework/views \
+    storage/logs
+chmod -R 775 bootstrap/cache storage
+
 echo "➤ Installing PHP dependencies"
 composer install --no-interaction --prefer-dist --optimize-autoloader
 
