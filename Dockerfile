@@ -55,9 +55,6 @@ RUN mkdir -p storage/framework/cache/data \
     storage/logs \
     && chown -R www-data:www-data storage bootstrap/cache public/build
 
-COPY render-start.sh /usr/local/bin/render-start.sh
-RUN chmod +x /usr/local/bin/render-start.sh
-
 EXPOSE 8080
 
-CMD ["/usr/local/bin/render-start.sh"]
+CMD ["apache2-foreground"]

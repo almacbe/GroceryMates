@@ -39,19 +39,21 @@ php artisan serve
 
 Then open [http://127.0.0.1:8000/merge](http://127.0.0.1:8000/merge).
 
-### Deploying to Render
+### Deploying to Laravel Forge
 
-This repository includes a `Dockerfile`, `render.yaml`, and `render-start.sh` so you can deploy with a single Render blueprint:
+1. Provision a new **PHP 8.2** site in [Laravel Forge](https://forge.laravel.com/) and point the document root to the `public` directory (`/home/forge/<domain>/public`).
+2. Connect this repository and branch to the site; Forge will clone it into `/home/forge/<domain>`.
+3. Configure the environment variables (`APP_NAME`, `APP_ENV=production`, `APP_URL`, `APP_KEY`, database credentials, `ASSET_URL`, etc.) from Forge’s “Environment” tab, mirroring the values in your `.env`.
+4. Make sure Node.js 18+ and npm are installed on the server (Forge’s “Meta” scripts can run `sudo apt install -y nodejs npm` or your preferred Node setup).
+5. Replace the default Forge deploy script with:
 
-1. Sign in to [Render](https://render.com/) and click **New → Blueprint Instance**.
-2. Point it at this repository; Render reads `render.yaml` and provisions:
-   - A web service built from the Dockerfile (Apache + PHP 8.2, Node-built assets, Composer dependencies).
-   - A managed PostgreSQL database (free tier by default).
-3. Once the service is created, open the dashboard and set `APP_KEY` to the value printed by `php artisan key:generate --show` (run locally). The startup script will auto-generate a key if the placeholder remains, but storing it in Render keeps the value stable across deploys.
-4. After the first build finishes, update the service’s `APP_URL` env var if Render assigns a different hostname.
-4. Optional: adjust the database plan or disable auto-deploy previews if not needed.
+   ```bash
+   cd /home/forge/<domain>
+   git pull origin main
+   bash deploy/forge-deploy.sh
+   ```
 
-The `render-start.sh` entrypoint caches configuration, runs database migrations, ensures `public/storage` is linked, and starts Apache. Migrations expect the managed PostgreSQL database Render provisions; switch to another database by editing `render.yaml` or the service env vars.
+   The provided script installs Composer dependencies, runs `npm ci && npm run build`, caches config/routes/views, links `public/storage`, and executes database migrations with `--force`.
 
 ### Usage
 
