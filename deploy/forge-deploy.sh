@@ -29,6 +29,22 @@ php artisan view:cache
 echo "➤ Linking storage directory"
 php artisan storage:link
 
+echo "➤ Checking database connectivity"
+if ! php artisan db:show --json > /dev/null 2>&1; then
+    echo ""
+    echo "❌ ERROR: Cannot connect to database!"
+    echo ""
+    echo "Please check the following in Laravel Forge:"
+    echo "  1. Create a MySQL database in Forge (Sites → Your Site → Database)"
+    echo "  2. Update the .env file with correct credentials:"
+    echo "     - DB_HOST (usually 127.0.0.1 for same-server database)"
+    echo "     - DB_DATABASE (the database name you created)"
+    echo "     - DB_USERNAME (usually 'forge')"
+    echo "     - DB_PASSWORD (the password you set)"
+    echo ""
+    exit 1
+fi
+
 echo "➤ Running database migrations"
 php artisan migrate --force
 
