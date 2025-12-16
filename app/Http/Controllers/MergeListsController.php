@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\MergeListsRequest;
 use App\Services\MergeListsService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use InvalidArgumentException;
@@ -19,27 +19,31 @@ class MergeListsController extends Controller
 
     public function index(): Response
     {
-        $state = session('merge_state', [
+        $state = Cache::get('merge_state', [
             'listA' => '',
             'listB' => '',
             'result' => '',
         ]);
 
         return Inertia::render('MergeLists', [
-            'listA' => old('listA', $state['listA']),
-            'listB' => old('listB', $state['listB']),
+            'listA' => $state['listA'],
+            'listB' => $state['listB'],
             'result' => $state['result'],
         ]);
     }
 
-    public function store(MergeListsRequest $request): RedirectResponse
+    public function store(): RedirectResponse
     {
-        $data = $request->validated();
+        $state = Cache::get('merge_state', [
+            'listA' => '',
+            'listB' => '',
+            'result' => '',
+        ]);
 
         try {
             $merged = $this->service->merge([
-                $data['listA'] ?? null,
-                $data['listB'] ?? null,
+                $state['listA'] ?? null,
+                $state['listB'] ?? null,
             ]);
         } catch (InvalidArgumentException $exception) {
             return back()
@@ -47,11 +51,9 @@ class MergeListsController extends Controller
                 ->withErrors(['lists' => $exception->getMessage()]);
         }
 
-        session()->flash('merge_state', [
-            'listA' => $data['listA'] ?? '',
-            'listB' => $data['listB'] ?? '',
-            'result' => implode(PHP_EOL, $merged),
-        ]);
+        $state['result'] = implode(PHP_EOL, $merged);
+
+        Cache::put('merge_state', $state, now()->addHour());
 
         return redirect()->route('merge.index');
     }
