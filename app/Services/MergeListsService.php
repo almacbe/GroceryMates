@@ -8,6 +8,17 @@ use InvalidArgumentException;
 
 class MergeListsService
 {
+    private const HOUSEHOLD_CONVERSIONS = [
+        'g' => [
+            'tablespoon' => 15.0,
+            'cup' => 240.0,
+        ],
+        'ml' => [
+            'tablespoon' => 15.0,
+            'cup' => 240.0,
+        ],
+    ];
+
     /**
      * Merge multiple INDYA-style ingredient lists into a single normalized list.
      *
@@ -73,21 +84,23 @@ class MergeListsService
             return strcasecmp($left['display_name'], $right['display_name']);
         });
 
-        return array_map(static function (array $entry): string {
+        return array_map(function (array $entry): string {
             if ($entry['quantity'] === null) {
                 return $entry['display_name'];
             }
 
             $quantity = $entry['quantity'];
-            $formattedQuantity = (fmod($quantity, 1.0) === 0.0)
-                ? (string) ((int) $quantity)
-                : rtrim(rtrim(number_format($quantity, 2, '.', ''), '0'), '.');
+            $formattedQuantity = $this->formatNumber($quantity);
 
             $unit = $entry['unit'] ?? '';
+            $quantityWithUnit = $unit !== ''
+                ? sprintf('%s%s', $formattedQuantity, $unit)
+                : $formattedQuantity;
 
-            return $unit !== ''
-                ? sprintf('%s: %s%s', $entry['display_name'], $formattedQuantity, $unit)
-                : sprintf('%s: %s', $entry['display_name'], $formattedQuantity);
+            $household = $this->formatHouseholdMeasure($quantity, $unit, $entry['display_name']);
+            $suffix = $household !== null ? sprintf(' (%s)', $household) : '';
+
+            return sprintf('%s: %s%s', $entry['display_name'], $quantityWithUnit, $suffix);
         }, $entries);
     }
 
@@ -184,5 +197,53 @@ class MergeListsService
             'mil', 'mls' => 'ml',
             default => $unitLower,
         };
+    }
+
+    private function formatHouseholdMeasure(float $quantity, ?string $unit, string $displayName): ?string
+    {
+        if ($unit === null || $unit === '') {
+            return null;
+        }
+
+        $unitLower = mb_strtolower($unit, 'UTF-8');
+
+        if ($unitLower === 'g' && $this->containsHuevoCrudo($displayName)) {
+            $eggs = $quantity / 60.0;
+            if ($eggs <= 0) {
+                return null;
+            }
+
+            return sprintf('%s huevos', $this->formatNumber($eggs));
+        }
+
+        $factors = self::HOUSEHOLD_CONVERSIONS[$unitLower] ?? null;
+        if ($factors === null) {
+            return null;
+        }
+
+        $tablespoons = $quantity / $factors['tablespoon'];
+        $cups = $quantity / $factors['cup'];
+
+        return sprintf(
+            '%s cucharadas o %s tazas',
+            $this->formatNumber($tablespoons),
+            $this->formatNumber($cups)
+        );
+    }
+
+    private function containsHuevoCrudo(string $displayName): bool
+    {
+        return mb_stripos($displayName, 'huevo crudo', 0, 'UTF-8') !== false;
+    }
+
+    private function formatNumber(float $value): string
+    {
+        if (fmod($value, 1.0) === 0.0) {
+            return (string) ((int) $value);
+        }
+
+        $formatted = number_format($value, 2, '.', '');
+
+        return rtrim(rtrim($formatted, '0'), '.');
     }
 }

@@ -102,11 +102,14 @@ const submit = () => {
 
                 <div class="mt-8">
                     <label for="result" class="mb-2 block text-sm font-medium text-gray-700">
-                        Resultado
+                        Resultado (gramos + medidas caseras)
                     </label>
+                    <p class="text-xs text-gray-500">
+                        Cada ingrediente incluye la equivalencia aproximada en cucharadas y tazas.
+                    </p>
                     <textarea
                         id="result"
-                        class="h-48 w-full cursor-text rounded border border-gray-300 bg-gray-50 p-3 text-sm text-gray-800 focus:outline-none"
+                        class="mt-2 h-48 w-full cursor-text rounded border border-gray-300 bg-gray-50 p-3 text-sm text-gray-800 focus:outline-none"
                         :value="props.result"
                         readonly
                     />
