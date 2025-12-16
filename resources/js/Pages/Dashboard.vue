@@ -22,6 +22,12 @@ import { Head } from '@inertiajs/vue3';
                 >
                     <div class="p-6 text-gray-900">
                         You're logged in!
+
+                        <div class="mt-4">
+                            <Link :href="route('merge.index')" class="text-indigo-600 hover:text-indigo-900">
+                                Go to Merge Lists
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>
