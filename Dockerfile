@@ -24,7 +24,7 @@ COPY . .
 COPY --from=vendor /app/vendor /app/vendor
 RUN npm run build
 
-FROM php:8.2-apache-bullseye AS runtime
+FROM php:8.4-apache AS runtime
 
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public \
     PORT=8080

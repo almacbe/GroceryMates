@@ -6,7 +6,7 @@ This repository hosts a minimal web interface that merges two ingredient lists e
 
 ### Prerequisites
 
-- PHP 8.2+
+- PHP 8.4+
 - Composer
 - Node.js 18+ and npm
 
@@ -41,7 +41,7 @@ Then open [http://127.0.0.1:8000/merge](http://127.0.0.1:8000/merge).
 
 ### Deploying to Laravel Forge
 
-1. Provision a new **PHP 8.2** site in [Laravel Forge](https://forge.laravel.com/) and point the document root to the `public` directory (`/home/forge/<domain>/public`).
+1. Provision a new **PHP 8.4** site in [Laravel Forge](https://forge.laravel.com/) and point the document root to the `public` directory (`/home/forge/<domain>/public`).
 2. Connect this repository and branch to the site; Forge will clone it into `/home/forge/<domain>`.
 3. Configure the environment variables (`APP_NAME`, `APP_ENV=production`, `APP_URL`, `APP_KEY`, database credentials, `ASSET_URL`, etc.) from Forge’s “Environment” tab, mirroring the values in your `.env`.
 4. Make sure Node.js 18+ and npm are installed on the server (Forge’s “Meta” scripts can run `sudo apt install -y nodejs npm` or your preferred Node setup).
