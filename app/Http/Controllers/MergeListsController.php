@@ -51,10 +51,13 @@ class MergeListsController extends Controller
                 ->withErrors(['lists' => $exception->getMessage()]);
         }
 
-        $state['result'] = implode(PHP_EOL, $merged);
+        return redirect()->route('merge.checklist')->with('mergedList', $merged);
+    }
 
-        Cache::put('merge_state', $state, now()->addHour());
-
-        return redirect()->route('merge.index');
+    public function checklist(): Response
+    {
+        return Inertia::render('Checklist', [
+            'mergedList' => session('mergedList'),
+        ]);
     }
 }

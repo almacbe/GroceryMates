@@ -35,6 +35,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/merge', [MergeListsController::class, 'index'])->name('merge.index');
     Route::post('/merge', [MergeListsController::class, 'store'])->name('merge.store');
+    Route::get('/merge/checklist', [MergeListsController::class, 'checklist'])->name('merge.checklist');
 
     Route::get('/merge/state', [MergeSessionController::class, 'getState'])->name('merge.state');
     Route::post('/merge/state', [MergeSessionController::class, 'updateList'])->name('merge.updateList');

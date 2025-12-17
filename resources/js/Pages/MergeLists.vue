@@ -13,10 +13,7 @@ const props = defineProps({
         type: String,
         default: '',
     },
-    result: {
-        type: String,
-        default: '',
-    },
+
 });
 
 const page = usePage();
@@ -26,7 +23,7 @@ const generalError = computed(() => fieldErrors.value.lists ?? null);
 // Refs for the lists and result to make them reactive
 const listA = ref(props.listA);
 const listB = ref(props.listB);
-const result = ref(props.result);
+
 
 let pollingTimer = null;
 let debounceTimer = null;
@@ -64,7 +61,7 @@ const getState = () => {
     axios.get(route('merge.state')).then(response => {
         listA.value = response.data.listA;
         listB.value = response.data.listB;
-        result.value = response.data.result;
+
     });
 };
 
@@ -91,7 +88,7 @@ const clearState = () => {
     axios.delete(route('merge.clearState')).then(() => {
         listA.value = '';
         listB.value = '';
-        result.value = '';
+
     });
 };
 
@@ -160,21 +157,6 @@ const clearState = () => {
                             </button>
                         </div>
                     </form>
-
-                    <div class="mt-8">
-                        <label for="result" class="mb-2 block text-sm font-medium text-gray-700">
-                            Resultado (gramos + medidas caseras)
-                        </label>
-                        <p class="text-xs text-gray-500">
-                            Cada ingrediente incluye la equivalencia aproximada en cucharadas y tazas.
-                        </p>
-                        <textarea
-                            id="result"
-                            class="mt-2 h-48 w-full cursor-text rounded border border-gray-300 bg-gray-50 p-3 text-sm text-gray-800 focus:outline-none"
-                            :value="result"
-                            readonly
-                        />
-                    </div>
                 </div>
             </div>
         </div>
