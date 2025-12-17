@@ -12,6 +12,13 @@ const items = ref(props.mergedList.map(item => ({ text: item, checked: false }))
 const checkedCount = computed(() => items.value.filter(item => item.checked).length);
 const totalCount = computed(() => items.value.length);
 
+const sortedItems = computed(() => {
+    return [...items.value].sort((a, b) => {
+        if (a.checked && !b.checked) return 1;
+        if (!a.checked && b.checked) return -1;
+        return 0;
+    });
+});
 </script>
 
 <template>
@@ -31,7 +38,7 @@ const totalCount = computed(() => items.value.length);
                             <span class="text-sm text-gray-500">{{ checkedCount }} / {{ totalCount }} items</span>
                         </div>
                         <ul class="divide-y divide-gray-200">
-                            <li v-for="(item, index) in items" :key="index" class="py-4 flex items-center">
+                            <li v-for="(item, index) in sortedItems" :key="item.text" class="py-4 flex items-center">
                                 <input
                                     :id="'item-' + index"
                                     v-model="item.checked"
