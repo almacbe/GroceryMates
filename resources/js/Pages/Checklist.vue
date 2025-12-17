@@ -1,13 +1,29 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import axios from 'axios';
 
 const props = defineProps({
-    mergedList: Array,
+    items: {
+        type: Array,
+        default: () => [],
+    },
 });
 
-const items = ref(props.mergedList.map(item => ({ text: item, checked: false })));
+const clientId = (() => {
+    const storageKey = 'grocery-mates:client-id';
+    const existing = sessionStorage.getItem(storageKey);
+    if (existing) {
+        return existing;
+    }
+
+    const id = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    sessionStorage.setItem(storageKey, id);
+    return id;
+})();
+
+const items = ref(props.items.map(item => ({ ...item })));
 
 const checkedCount = computed(() => items.value.filter(item => item.checked).length);
 const totalCount = computed(() => items.value.length);
@@ -18,6 +34,36 @@ const sortedItems = computed(() => {
         if (!a.checked && b.checked) return -1;
         return 0;
     });
+});
+
+const updateItemOnServer = (id, checked) => {
+    axios.post(route('merge.checklist.update'), { id, checked, originId: clientId });
+};
+
+const toggleItem = (item, checked) => {
+    item.checked = checked;
+    updateItemOnServer(item.id, checked);
+};
+
+onMounted(() => {
+    if (!window.Echo) return;
+
+    window.Echo.private('merge-checklist')
+        .listen('.merge.checklist.replaced', (event) => {
+            if (event.originId && event.originId === clientId) return;
+            items.value = (event.items ?? []).map(item => ({ ...item }));
+        })
+        .listen('.merge.checklist.item.updated', (event) => {
+            if (event.originId && event.originId === clientId) return;
+
+            const target = items.value.find(item => item.id === event.id);
+            if (!target) return;
+            target.checked = Boolean(event.checked);
+        });
+});
+
+onUnmounted(() => {
+    window.Echo?.leave?.('merge-checklist');
 });
 </script>
 
@@ -38,15 +84,16 @@ const sortedItems = computed(() => {
                             <span class="text-sm text-gray-500">{{ checkedCount }} / {{ totalCount }} items</span>
                         </div>
                         <ul class="divide-y divide-gray-200">
-                            <li v-for="(item, index) in sortedItems" :key="item.text" class="py-4 flex items-center">
+                            <li v-for="item in sortedItems" :key="item.id" class="py-4 flex items-center">
                                 <input
-                                    :id="'item-' + index"
-                                    v-model="item.checked"
+                                    :id="`item-${item.id}`"
                                     type="checkbox"
                                     class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    :checked="item.checked"
+                                    @change="toggleItem(item, $event.target.checked)"
                                 />
                                 <label
-                                    :for="'item-' + index"
+                                    :for="`item-${item.id}`"
                                     class="ml-3 block text-gray-900"
                                     :class="{ 'line-through text-gray-500': item.checked }"
                                 >

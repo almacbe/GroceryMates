@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Events\MergeChecklistReplaced;
 use App\Services\MergeListsService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -13,13 +15,16 @@ use InvalidArgumentException;
 
 class MergeListsController extends Controller
 {
+    private const STATE_KEY = 'merge_state';
+    private const CHECKLIST_KEY = 'merge_checklist_state';
+
     public function __construct(private readonly MergeListsService $service)
     {
     }
 
     public function index(): Response
     {
-        $state = Cache::get('merge_state', [
+        $state = Cache::get(self::STATE_KEY, [
             'listA' => '',
             'listB' => '',
             'result' => '',
@@ -32,9 +37,13 @@ class MergeListsController extends Controller
         ]);
     }
 
-    public function store(): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
-        $state = Cache::get('merge_state', [
+        $validated = $request->validate([
+            'originId' => 'nullable|string|max:128',
+        ]);
+
+        $state = Cache::get(self::STATE_KEY, [
             'listA' => '',
             'listB' => '',
             'result' => '',
@@ -51,13 +60,44 @@ class MergeListsController extends Controller
                 ->withErrors(['lists' => $exception->getMessage()]);
         }
 
+        $items = array_map(static function (string $text, int $index): array {
+            return [
+                'id' => sha1($text.'|'.$index),
+                'text' => $text,
+                'checked' => false,
+            ];
+        }, $merged, array_keys($merged));
+
+        Cache::put(self::CHECKLIST_KEY, ['items' => $items], now()->addHour());
+
+        event(new MergeChecklistReplaced(
+            items: $items,
+            originId: $validated['originId'] ?? null,
+        ));
+
         return redirect()->route('merge.checklist')->with('mergedList', $merged);
     }
 
     public function checklist(): Response
     {
+        $state = Cache::get(self::CHECKLIST_KEY);
+
+        if (! is_array($state) || ! isset($state['items']) || ! is_array($state['items'])) {
+            $merged = session('mergedList') ?? [];
+            $items = array_map(static function (string $text, int $index): array {
+                return [
+                    'id' => sha1($text.'|'.$index),
+                    'text' => $text,
+                    'checked' => false,
+                ];
+            }, $merged, array_keys($merged));
+
+            $state = ['items' => $items];
+            Cache::put(self::CHECKLIST_KEY, $state, now()->addHour());
+        }
+
         return Inertia::render('Checklist', [
-            'mergedList' => session('mergedList'),
+            'items' => $state['items'],
         ]);
     }
 }

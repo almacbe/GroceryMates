@@ -16,6 +16,18 @@ const props = defineProps({
 
 });
 
+const clientId = (() => {
+    const storageKey = 'grocery-mates:client-id';
+    const existing = sessionStorage.getItem(storageKey);
+    if (existing) {
+        return existing;
+    }
+
+    const id = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    sessionStorage.setItem(storageKey, id);
+    return id;
+})();
+
 const page = usePage();
 const fieldErrors = computed(() => page.props.errors ?? {});
 const generalError = computed(() => fieldErrors.value.lists ?? null);
@@ -23,72 +35,77 @@ const generalError = computed(() => fieldErrors.value.lists ?? null);
 // Refs for the lists and result to make them reactive
 const listA = ref(props.listA);
 const listB = ref(props.listB);
-
-
-let pollingTimer = null;
-let debounceTimer = null;
+const suppressServerSync = ref(false);
 
 // Debounce function
 const debounce = (func, delay) => {
+    let timer = null;
     return function (...args) {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
             func.apply(this, args);
         }, delay);
     };
 };
 
 const updateListOnServer = (listName, content) => {
-    axios.post(route('merge.updateList'), { listName, content });
+    axios.post(route('merge.updateList'), { listName, content, originId: clientId });
 };
 
 const debouncedUpdateListA = debounce(content => updateListOnServer('listA', content), 500);
 const debouncedUpdateListB = debounce(content => updateListOnServer('listB', content), 500);
 
 watch(listA, (newValue) => {
-    if (newValue !== props.listA) {
-        debouncedUpdateListA(newValue);
-    }
+    if (suppressServerSync.value) return;
+    debouncedUpdateListA(newValue);
 });
 
 watch(listB, (newValue) => {
-    if (newValue !== props.listB) {
-        debouncedUpdateListB(newValue);
-    }
+    if (suppressServerSync.value) return;
+    debouncedUpdateListB(newValue);
 });
 
-const getState = () => {
-    axios.get(route('merge.state')).then(response => {
-        listA.value = response.data.listA;
-        listB.value = response.data.listB;
-
-    });
-};
-
 onMounted(() => {
-    getState(); // Get initial state
-    pollingTimer = setInterval(getState, 2000); // Poll every 2 seconds
+    if (!window.Echo) return;
+
+    window.Echo.private('merge-state').listen('.merge.state.updated', (event) => {
+        if (event.originId && event.originId === clientId) return;
+
+        suppressServerSync.value = true;
+        listA.value = event.state?.listA ?? '';
+        listB.value = event.state?.listB ?? '';
+        setTimeout(() => {
+            suppressServerSync.value = false;
+        }, 0);
+    });
 });
 
 onUnmounted(() => {
-    if (pollingTimer) {
-        clearInterval(pollingTimer);
-    }
+    window.Echo?.leave?.('merge-state');
 });
 
-const mergeForm = useForm({});
+const mergeForm = useForm({
+    originId: clientId,
+});
 const submitMerge = () => {
-    mergeForm.post(route('merge.store'), {
-        preserveScroll: true,
-        onSuccess: () => getState(), // Refresh state after merge
+    Promise.all([
+        axios.post(route('merge.updateList'), { listName: 'listA', content: listA.value, originId: clientId }),
+        axios.post(route('merge.updateList'), { listName: 'listB', content: listB.value, originId: clientId }),
+    ]).finally(() => {
+        mergeForm.post(route('merge.store'), {
+            preserveScroll: true,
+        });
     });
 };
 
 const clearState = () => {
     axios.delete(route('merge.clearState')).then(() => {
+        suppressServerSync.value = true;
         listA.value = '';
         listB.value = '';
-
+        setTimeout(() => {
+            suppressServerSync.value = false;
+        }, 0);
     });
 };
 

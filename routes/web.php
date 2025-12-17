@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MergeListsController;
+use App\Http\Controllers\MergeChecklistController;
 use App\Http\Controllers\MergeSessionController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -44,6 +45,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/merge/state', [MergeSessionController::class, 'getState'])->name('merge.state');
     Route::post('/merge/state', [MergeSessionController::class, 'updateList'])->name('merge.updateList');
     Route::delete('/merge/state', [MergeSessionController::class, 'clearState'])->name('merge.clearState');
+
+    Route::get('/merge/checklist/state', [MergeChecklistController::class, 'state'])->name('merge.checklist.state');
+    Route::post('/merge/checklist/state', [MergeChecklistController::class, 'updateItem'])->name('merge.checklist.update');
 });
 
 require __DIR__.'/auth.php';

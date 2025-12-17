@@ -31,6 +31,12 @@ In one terminal:
 npm run dev
 ```
 
+In another terminal (for real-time sync):
+
+```bash
+php artisan reverb:start
+```
+
 In another terminal:
 
 ```bash
