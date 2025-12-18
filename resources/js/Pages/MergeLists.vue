@@ -1,5 +1,5 @@
 <script setup>
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, watch, onMounted, onUnmounted, ref } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import axios from 'axios';
@@ -37,6 +37,8 @@ const listA = ref(props.listA);
 const listB = ref(props.listB);
 const suppressServerSync = ref(false);
 let pollingTimer = null;
+let checklistPollingTimer = null;
+const didRedirectToChecklist = ref(false);
 
 // Debounce function
 const debounce = (func, delay) => {
@@ -94,16 +96,44 @@ onMounted(() => {
             }, 0);
         });
 
+        window.Echo.private('merge-checklist').listen('.merge.checklist.replaced', (event) => {
+            if (didRedirectToChecklist.value) return;
+            if (event.originId && event.originId === clientId) return;
+
+            const items = event.items ?? [];
+            if (!Array.isArray(items) || items.length === 0) return;
+
+            didRedirectToChecklist.value = true;
+            router.visit(route('merge.checklist'), { preserveScroll: true });
+        });
+
         return;
     }
 
     getState();
     pollingTimer = setInterval(getState, 1000);
+
+    const getChecklistState = () => {
+        axios.get(route('merge.checklist.state')).then(response => {
+            if (didRedirectToChecklist.value) return;
+
+            const items = response.data?.items ?? [];
+            if (!Array.isArray(items) || items.length === 0) return;
+
+            didRedirectToChecklist.value = true;
+            router.visit(route('merge.checklist'), { preserveScroll: true });
+        });
+    };
+
+    getChecklistState();
+    checklistPollingTimer = setInterval(getChecklistState, 1000);
 });
 
 onUnmounted(() => {
     window.Echo?.leave?.('merge-state');
+    window.Echo?.leave?.('merge-checklist');
     if (pollingTimer) clearInterval(pollingTimer);
+    if (checklistPollingTimer) clearInterval(checklistPollingTimer);
 });
 
 const mergeForm = useForm({
