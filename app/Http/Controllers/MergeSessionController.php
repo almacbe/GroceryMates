@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Events\MergeStateUpdated;
-use App\Events\MergeChecklistReplaced;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Throwable;
@@ -37,7 +36,6 @@ class MergeSessionController extends Controller
         $state['result'] = '';
 
         Cache::put(self::STATE_KEY, $state, now()->addHour());
-        Cache::forget(self::CHECKLIST_KEY);
 
         try {
             event(new MergeStateUpdated(
@@ -46,8 +44,6 @@ class MergeSessionController extends Controller
                 ],
                 originId: $validated['originId'] ?? null,
             ));
-
-            event(new MergeChecklistReplaced(items: [], originId: $validated['originId'] ?? null));
         } catch (Throwable $throwable) {
             report($throwable);
         }

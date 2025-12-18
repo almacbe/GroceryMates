@@ -23,8 +23,17 @@ class MergeListsController extends Controller
     {
     }
 
-    public function index(): Response
+    public function index(): Response|RedirectResponse
     {
+        if (! request()->boolean('edit')) {
+            $checklist = Cache::get(self::CHECKLIST_KEY);
+            $items = is_array($checklist) ? ($checklist['items'] ?? null) : null;
+
+            if (is_array($items) && count($items) > 0) {
+                return redirect()->route('merge.checklist');
+            }
+        }
+
         $state = Cache::get(self::STATE_KEY, [
             'listA' => '',
             'listB' => '',
