@@ -36,6 +36,7 @@ const generalError = computed(() => fieldErrors.value.lists ?? null);
 const listA = ref(props.listA);
 const listB = ref(props.listB);
 const suppressServerSync = ref(false);
+let pollingTimer = null;
 
 // Debounce function
 const debounce = (func, delay) => {
@@ -52,8 +53,8 @@ const updateListOnServer = (listName, content) => {
     axios.post(route('merge.updateList'), { listName, content, originId: clientId });
 };
 
-const debouncedUpdateListA = debounce(content => updateListOnServer('listA', content), 500);
-const debouncedUpdateListB = debounce(content => updateListOnServer('listB', content), 500);
+const debouncedUpdateListA = debounce(content => updateListOnServer('listA', content), 150);
+const debouncedUpdateListB = debounce(content => updateListOnServer('listB', content), 150);
 
 watch(listA, (newValue) => {
     if (suppressServerSync.value) return;
@@ -65,23 +66,44 @@ watch(listB, (newValue) => {
     debouncedUpdateListB(newValue);
 });
 
-onMounted(() => {
-    if (!window.Echo) return;
-
-    window.Echo.private('merge-state').listen('.merge.state.updated', (event) => {
-        if (event.originId && event.originId === clientId) return;
-
+const getState = () => {
+    axios.get(route('merge.state')).then(response => {
         suppressServerSync.value = true;
-        listA.value = event.state?.listA ?? '';
-        listB.value = event.state?.listB ?? '';
+        listA.value = response.data.listA ?? '';
+        listB.value = response.data.listB ?? '';
         setTimeout(() => {
             suppressServerSync.value = false;
         }, 0);
     });
+};
+
+onMounted(() => {
+    if (window.Echo) {
+        window.Echo.private('merge-state').listen('.merge.state.updated', (event) => {
+            if (event.originId && event.originId === clientId) return;
+
+            suppressServerSync.value = true;
+            if (Object.prototype.hasOwnProperty.call(event.updates ?? {}, 'listA')) {
+                listA.value = event.updates.listA ?? '';
+            }
+            if (Object.prototype.hasOwnProperty.call(event.updates ?? {}, 'listB')) {
+                listB.value = event.updates.listB ?? '';
+            }
+            setTimeout(() => {
+                suppressServerSync.value = false;
+            }, 0);
+        });
+
+        return;
+    }
+
+    getState();
+    pollingTimer = setInterval(getState, 1000);
 });
 
 onUnmounted(() => {
     window.Echo?.leave?.('merge-state');
+    if (pollingTimer) clearInterval(pollingTimer);
 });
 
 const mergeForm = useForm({

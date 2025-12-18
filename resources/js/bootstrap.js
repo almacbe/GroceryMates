@@ -15,13 +15,17 @@ if (reverbKey) {
         .querySelector('meta[name="csrf-token"]')
         ?.getAttribute('content');
 
+    const reverbHost = import.meta.env.VITE_REVERB_HOST ?? window.location.hostname;
+    const reverbPort = Number(import.meta.env.VITE_REVERB_PORT ?? 8081);
+    const reverbScheme = import.meta.env.VITE_REVERB_SCHEME ?? 'http';
+
     window.Echo = new Echo({
         broadcaster: 'reverb',
         key: reverbKey,
-        wsHost: import.meta.env.VITE_REVERB_HOST ?? window.location.hostname,
-        wsPort: Number(import.meta.env.VITE_REVERB_PORT ?? 8080),
-        wssPort: Number(import.meta.env.VITE_REVERB_PORT ?? 8080),
-        forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'http') === 'https',
+        wsHost: reverbHost,
+        wsPort: reverbPort,
+        wssPort: reverbPort,
+        forceTLS: reverbScheme === 'https',
         enabledTransports: ['ws', 'wss'],
         ...(csrfToken
             ? {

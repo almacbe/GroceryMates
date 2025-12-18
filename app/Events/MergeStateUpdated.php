@@ -15,10 +15,10 @@ class MergeStateUpdated implements ShouldBroadcastNow
     use SerializesModels;
 
     /**
-     * @param  array{listA: string, listB: string}  $state
+     * @param  array{listA?: string, listB?: string}  $updates
      */
     public function __construct(
-        public readonly array $state,
+        public readonly array $updates,
         public readonly ?string $originId = null,
     ) {
     }
@@ -36,9 +36,8 @@ class MergeStateUpdated implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'state' => $this->state,
+            'updates' => $this->updates,
             'originId' => $this->originId,
         ];
     }
 }
-

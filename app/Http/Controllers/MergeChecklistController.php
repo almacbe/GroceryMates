@@ -8,6 +8,7 @@ use App\Events\MergeChecklistItemUpdated;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 class MergeChecklistController extends Controller
 {
@@ -58,13 +59,16 @@ class MergeChecklistController extends Controller
         $state['items'] = $items;
         Cache::put(self::CHECKLIST_KEY, $state, now()->addHour());
 
-        event(new MergeChecklistItemUpdated(
-            id: $validated['id'],
-            checked: $validated['checked'],
-            originId: $validated['originId'] ?? null,
-        ));
+        try {
+            event(new MergeChecklistItemUpdated(
+                id: $validated['id'],
+                checked: $validated['checked'],
+                originId: $validated['originId'] ?? null,
+            ));
+        } catch (Throwable $throwable) {
+            report($throwable);
+        }
 
         return response()->json(['status' => 'success']);
     }
 }
-

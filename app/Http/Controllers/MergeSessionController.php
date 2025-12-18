@@ -6,6 +6,7 @@ use App\Events\MergeStateUpdated;
 use App\Events\MergeChecklistReplaced;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 class MergeSessionController extends Controller
 {
@@ -38,15 +39,18 @@ class MergeSessionController extends Controller
         Cache::put(self::STATE_KEY, $state, now()->addHour());
         Cache::forget(self::CHECKLIST_KEY);
 
-        event(new MergeStateUpdated(
-            state: [
-                'listA' => (string) ($state['listA'] ?? ''),
-                'listB' => (string) ($state['listB'] ?? ''),
-            ],
-            originId: $validated['originId'] ?? null,
-        ));
+        try {
+            event(new MergeStateUpdated(
+                updates: [
+                    $validated['listName'] => (string) ($validated['content'] ?? ''),
+                ],
+                originId: $validated['originId'] ?? null,
+            ));
 
-        event(new MergeChecklistReplaced(items: [], originId: $validated['originId'] ?? null));
+            event(new MergeChecklistReplaced(items: [], originId: $validated['originId'] ?? null));
+        } catch (Throwable $throwable) {
+            report($throwable);
+        }
 
         return response()->json(['status' => 'success', 'state' => $state]);
     }
@@ -62,14 +66,18 @@ class MergeSessionController extends Controller
         Cache::forget(self::STATE_KEY);
         Cache::forget(self::CHECKLIST_KEY);
 
-        event(new MergeStateUpdated(
-            state: [
-                'listA' => '',
-                'listB' => '',
-            ],
-        ));
+        try {
+            event(new MergeStateUpdated(
+                updates: [
+                    'listA' => '',
+                    'listB' => '',
+                ],
+            ));
 
-        event(new MergeChecklistReplaced(items: []));
+            event(new MergeChecklistReplaced(items: []));
+        } catch (Throwable $throwable) {
+            report($throwable);
+        }
 
         return response()->json(['status' => 'success']);
     }

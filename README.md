@@ -37,6 +37,8 @@ In another terminal (for real-time sync):
 php artisan reverb:start
 ```
 
+If you run the app via Docker/Apache on port 8080, Reverb uses port **8081** by default (see `.env.example`).
+
 In another terminal:
 
 ```bash

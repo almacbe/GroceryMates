@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use InvalidArgumentException;
+use Throwable;
 
 class MergeListsController extends Controller
 {
@@ -70,10 +71,14 @@ class MergeListsController extends Controller
 
         Cache::put(self::CHECKLIST_KEY, ['items' => $items], now()->addHour());
 
-        event(new MergeChecklistReplaced(
-            items: $items,
-            originId: $validated['originId'] ?? null,
-        ));
+        try {
+            event(new MergeChecklistReplaced(
+                items: $items,
+                originId: $validated['originId'] ?? null,
+            ));
+        } catch (Throwable $throwable) {
+            report($throwable);
+        }
 
         return redirect()->route('merge.checklist')->with('mergedList', $merged);
     }

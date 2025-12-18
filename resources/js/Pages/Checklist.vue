@@ -24,6 +24,7 @@ const clientId = (() => {
 })();
 
 const items = ref(props.items.map(item => ({ ...item })));
+let pollingTimer = null;
 
 const checkedCount = computed(() => items.value.filter(item => item.checked).length);
 const totalCount = computed(() => items.value.length);
@@ -46,24 +47,36 @@ const toggleItem = (item, checked) => {
 };
 
 onMounted(() => {
-    if (!window.Echo) return;
+    if (window.Echo) {
+        window.Echo.private('merge-checklist')
+            .listen('.merge.checklist.replaced', (event) => {
+                if (event.originId && event.originId === clientId) return;
+                items.value = (event.items ?? []).map(item => ({ ...item }));
+            })
+            .listen('.merge.checklist.item.updated', (event) => {
+                if (event.originId && event.originId === clientId) return;
 
-    window.Echo.private('merge-checklist')
-        .listen('.merge.checklist.replaced', (event) => {
-            if (event.originId && event.originId === clientId) return;
-            items.value = (event.items ?? []).map(item => ({ ...item }));
-        })
-        .listen('.merge.checklist.item.updated', (event) => {
-            if (event.originId && event.originId === clientId) return;
+                const target = items.value.find(item => item.id === event.id);
+                if (!target) return;
+                target.checked = Boolean(event.checked);
+            });
 
-            const target = items.value.find(item => item.id === event.id);
-            if (!target) return;
-            target.checked = Boolean(event.checked);
+        return;
+    }
+
+    const getState = () => {
+        axios.get(route('merge.checklist.state')).then(response => {
+            items.value = (response.data.items ?? []).map(item => ({ ...item }));
         });
+    };
+
+    getState();
+    pollingTimer = setInterval(getState, 1000);
 });
 
 onUnmounted(() => {
     window.Echo?.leave?.('merge-checklist');
+    if (pollingTimer) clearInterval(pollingTimer);
 });
 </script>
 

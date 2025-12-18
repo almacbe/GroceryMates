@@ -17,6 +17,7 @@
 # Node / Vite
 /node_modules/
 /public/build/
+/public/hot
 pnpm-lock.yaml
 yarn.lock
 /.npm
@@ -24,6 +25,7 @@ yarn.lock
 /.yarn
 
 # IDEs & tooling
+/.claude/
 /.idea/
 .vscode/
 *.code-workspace
